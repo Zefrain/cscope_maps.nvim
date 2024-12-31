@@ -304,8 +304,8 @@ M.db_build = function()
 
 	local function run_command(commands, index)
 		local handle = nil
-		local stdout = vim.loop.new_pipe()
-		local stderr = vim.loop.new_pipe()
+		local stdout = vim.uv.new_pipe()
+		local stderr = vim.uv.new_pipe()
 
 		if index > #commands then
 			log.error("database built failed")
@@ -323,11 +323,11 @@ M.db_build = function()
 			end
 
 			log.info("building database with command: " .. cmd_s)
-			handle, pid = vim.loop.spawn(
+			handle, pid = vim.uv.spawn(
 				"sh",
 				{ args = { "-c", cmd_s }, stdio = { nil, stdout, stderr } },
 				vim.schedule_wrap(function(code, _) -- on exit
-					vim.loop.close(handle, function()
+					vim.uv.close(handle, function()
 						stdout:read_stop()
 						stderr:read_stop()
 						stdout:close()
@@ -343,8 +343,8 @@ M.db_build = function()
 					vim.cmd("cd " .. cur_path)
 				end)
 			)
-			vim.loop.read_start(stdout, M.db_build_output)
-			vim.loop.read_start(stderr, M.db_build_output)
+			vim.uv.read_start(stdout, M.db_build_output)
+			vim.uv.read_start(stderr, M.db_build_output)
 		else
 			run_command(commands, index + 1)
 		end
